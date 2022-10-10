@@ -238,14 +238,16 @@ public class FingerCaptureActivity extends AppCompatActivity {
             ByteBuffer uBuffer = planes[1].getBuffer();
             ByteBuffer vBuffer = planes[2].getBuffer();
 
-            int ySize = yBuffer.remaining();
-            int uSize = uBuffer.remaining();
-            int vSize = vBuffer.remaining();
+            int pixelStride = planes[0].getRowStride();
+            byte[] tmp = new byte[yBuffer.remaining()];
+            yBuffer.get(tmp, 0, yBuffer.remaining());
 
-            byte[] nv21 = new byte[ySize + uSize + vSize];
-            yBuffer.get(nv21, 0, ySize);
-            vBuffer.get(nv21, ySize, vSize);
-            uBuffer.get(nv21, ySize + vSize, uSize);
+            byte[] nv21 = new byte[image.getWidth() * image.getHeight() * 3 / 2];
+            Arrays.fill(nv21, (byte)0x80);
+
+            for(int i = 0; i < image.getHeight(); i ++) {
+                System.arraycopy(tmp, pixelStride * i, nv21, i * image.getWidth(), image.getWidth());
+            }
 
             if(m_prepared == false) {
                 double quality = FingerSDK.getInstance().getCaptureQuality(nv21, imageProxy.getWidth(), imageProxy.getHeight(), imageProxy.getImageInfo().getRotationDegrees());
